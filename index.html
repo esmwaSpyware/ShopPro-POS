@@ -1,0 +1,1482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>POS System</title>
+    <!-- Include Chart.js for Sales Analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #4a6fa5;
+            --secondary: #334e68;
+            --light: #f9f9fb;
+            --dark: #243b53;
+            --gray: #829ab1;
+            --border-radius: 8px;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        body {
+            background: #f5f7fa;
+            color: var(--dark);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .top-bar {
+            background: var(--primary);
+            color: white;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .sidebar {
+            width: 220px;
+            background: white;
+            border-right: 1px solid #e3e8ee;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .menu-item {
+            padding: 14px 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s ease;
+        }
+
+        .menu-item:hover, .menu-item.active {
+            background: rgba(74, 111, 165, 0.1);
+            border-left: 4px solid var(--primary);
+        }
+
+        .content {
+            flex: 1;
+            display: flex;
+            padding: 20px;
+            gap: 20px;
+            overflow: hidden;
+        }
+
+        .sales-section, .orders-section, .products-section, .customers-section, .reports-section, .settings-section {
+            flex: 1;
+            display: none;
+            flex-direction: column;
+            gap: 20px;
+            overflow: hidden;
+        }
+
+        .product-categories {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 15px;
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+        }
+
+        .category {
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: var(--border-radius);
+            background: var(--light);
+            transition: all 0.2s ease;
+        }
+
+        .category.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .products-grid {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 15px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            flex: 1;
+            overflow-x: auto;
+            overflow-y: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .product {
+            border: 1px solid #e3e8ee;
+            border-radius: var(--border-radius);
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            min-width: 180px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 100%;
+        }
+
+        .product:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow);
+        }
+
+        .product .product-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .product .product-price {
+            margin-bottom: 5px;
+        }
+
+        .orders-list, .products-list, .customers-list, .reports-container, .settings-container {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .order-item, .product-item, .customer-item {
+            border-bottom: 1px solid #e3e8ee;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .order-item:hover, .product-item:hover, .customer-item:hover {
+            background: var(--light);
+        }
+
+        .customer-form, .product-form {
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .customer-form input, .product-form input {
+            padding: 8px;
+            border: 1px solid #e3e8ee;
+            border-radius: 4px;
+            flex: 1;
+        }
+
+        .cart-section {
+            width: 360px;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cart-header {
+            padding: 15px;
+            border-bottom: 1px solid #e3e8ee;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .cart-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .cart-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f4f8;
+        }
+
+        .item-quantity {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .quantity-btn {
+            width: 24px;
+            height: 24px;
+            background: var(--light);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .cart-footer {
+            border-top: 1px solid #e3e8ee;
+            padding: 15px;
+        }
+
+        .total {
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .discount-tax {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .checkout-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px;
+            border-radius: var(--border-radius);
+            border: none;
+            cursor: pointer;
+            flex: 1;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-outlined {
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .customer-select {
+            padding: 8px;
+            border: 1px solid #e3e8ee;
+            border-radius: 4px;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .report-section, .settings-section-inner {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #e3e8ee;
+        }
+
+        .report-section h3, .settings-section-inner h3 {
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        .settings-option {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .settings-option label {
+            flex: 1;
+        }
+
+        .delete-btn {
+            background: #dc3545;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            justify-self: end;
+        }
+
+        .delete-btn:hover {
+            background: #c82333;
+        }
+
+        .low-stock {
+            background: #fff3cd;
+            border-color: #ffeeba;
+        }
+
+        .overstock {
+            background: #d1ecf1;
+            border-color: #bee5eb;
+        }
+
+        .low-stock-warning, .overstock-warning {
+            color: #856404;
+            font-size: 12px;
+        }
+
+        .quantity-selector {
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            justify-content: center;
+        }
+
+        .quantity-input {
+            width: 40px;
+            padding: 2px;
+            text-align: center;
+        }
+
+        .add-multiple-btn {
+            background: var(--primary);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .pagination {
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            margin-top: 10px;
+        }
+
+        .pagination button {
+            padding: 5px 10px;
+            border: 1px solid var(--primary);
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .pagination button:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .pagination button:disabled {
+            background: #e3e8ee;
+            cursor: not-allowed;
+        }
+
+        .pagination span {
+            padding: 5px 10px;
+        }
+
+        .barcode-container {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .barcode-container input {
+            padding: 8px;
+            border: 1px solid #e3e8ee;
+            border-radius: 4px;
+            flex: 1;
+        }
+
+        .barcode-container button {
+            padding: 8px;
+            border: none;
+            background: var(--primary);
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .barcode-container button:hover {
+            background: var(--secondary);
+        }
+
+        .search-orders {
+            margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-orders input, .search-orders select {
+            padding: 8px;
+            border: 1px solid #e3e8ee;
+            border-radius: 4px;
+            flex: 1;
+        }
+
+        .chart-container {
+            position: relative;
+            margin: 20px 0;
+            height: 300px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="top-bar">
+        <div class="brand">ShopPro POS</div>
+        <div class="user-controls">
+            <div>Register #1</div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="sidebar">
+            <div class="menu-item active" onclick="showSection('sale')">📊 Sale</div>
+            <div class="menu-item" onclick="showSection('orders')">📋 Orders</div>
+            <div class="menu-item" onclick="showSection('products')">📦 Products</div>
+            <div class="menu-item" onclick="showSection('customers')">👥 Customers</div>
+            <div class="menu-item" onclick="showSection('reports')">📝 Reports</div>
+            <div class="menu-item" onclick="showSection('settings')">⚙️ Settings</div>
+        </div>
+
+        <div class="content">
+            <div class="sales-section" id="saleSection">
+                <div class="barcode-container">
+                    <input type="text" id="barcodeInput" placeholder="Scan barcode or enter manually">
+                    <button onclick="scanBarcode()">Scan</button>
+                </div>
+                <div class="search-container" style="margin-bottom: 15px;">
+                    <input type="text" id="productSearch" placeholder="Search products..." 
+                           style="width: 100%; padding: 8px; border: 1px solid #e3e8ee; border-radius: 4px;">
+                </div>
+                <div class="product-categories" id="categoryFilter"></div>
+                <div class="products-grid" id="productGrid"></div>
+                <div class="pagination" id="pagination"></div>
+            </div>
+
+            <div class="orders-section" id="ordersSection">
+                <div class="search-orders">
+                    <input type="text" id="orderSearch" placeholder="Search by ID or Date..." 
+                           style="flex: 2;" oninput="filterOrders()">
+                    <select id="customerFilter" onchange="filterOrders()">
+                        <option value="">All Customers</option>
+                    </select>
+                </div>
+                <div class="orders-list" id="ordersList"></div>
+            </div>
+
+            <div class="products-section" id="productsSection">
+                <div class="product-form">
+                    <input id="newProductName" placeholder="Product Name">
+                    <input id="newProductPrice" type="number" step="0.01" placeholder="Price">
+                    <input id="newProductCost" type="number" step="0.01" placeholder="Cost Price">
+                    <input id="newProductStock" type="number" placeholder="Stock">
+                    <input id="newProductCategory" placeholder="Category">
+                    <button class="btn btn-primary" onclick="addNewProduct()">Add Product</button>
+                </div>
+                <div class="products-list" id="productsList"></div>
+            </div>
+
+            <div class="customers-section" id="customersSection">
+                <div class="customer-form">
+                    <input id="newCustomerName" placeholder="Customer Name">
+                    <input id="newCustomerEmail" type="email" placeholder="Email">
+                    <input id="newCustomerPhone" placeholder="Phone">
+                    <button class="btn btn-primary" onclick="addNewCustomer()">Add Customer</button>
+                </div>
+                <div class="customers-list" id="customersList"></div>
+            </div>
+
+            <div class="reports-section" id="reportsSection">
+                <div class="reports-container" id="reportsContainer"></div>
+            </div>
+
+            <div class="settings-section" id="settingsSection">
+                <div class="settings-container" id="settingsContainer"></div>
+            </div>
+
+            <div class="cart-section">
+                <div class="cart-header">
+                    <div class="cart-title">Current Order</div>
+                    <div class="cart-action" onclick="clearCart()">Clear</div>
+                </div>
+                <div class="cart-items" id="cartItems"></div>
+                <div class="cart-footer">
+                    <div class="discount-tax">
+                        <input type="number" id="discountInput" placeholder="Discount % or $" style="width: 50%; padding: 5px;" 
+                               oninput="applyDiscount()" min="0" max="100">
+                        <div id="taxDisplay" style="width: 50%; text-align: right;"></div>
+                    </div>
+                    <select class="customer-select" id="customerSelect">
+                        <option value="">Select Customer (Optional)</option>
+                    </select>
+                    <div class="total">
+                        <div>Subtotal</div>
+                        <div id="subtotal">$0.00</div>
+                    </div>
+                    <div class="total">
+                        <div>Total (after discount + tax)</div>
+                        <div id="total">$0.00</div>
+                    </div>
+                    <div class="checkout-controls">
+                        <button class="btn btn-outlined" onclick="printReceipt()">Receipt</button>
+                        <button class="btn btn-primary" onclick="processPayment()">Checkout</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let products = [
+            { id: 1, barcode: "123456789", name: "Coffee", price: 2.99, cost: 1.50, category: "Beverages", stock: 50 },
+            { id: 2, barcode: "234567890", name: "Sandwich", price: 5.99, cost: 3.00, category: "Food", stock: 30 },
+            { id: 3, barcode: "345678901", name: "Cake", price: 3.99, cost: 2.00, category: "Desserts", stock: 20 },
+            { id: 4, barcode: "456789012", name: "Juice", price: 1.99, cost: 1.00, category: "Beverages", stock: 40 },
+            { id: 5, barcode: "567890123", name: "Tea", price: 2.49, cost: 1.20, category: "Beverages", stock: 60 },
+            { id: 6, barcode: "678901234", name: "Burger", price: 6.99, cost: 3.50, category: "Food", stock: 25 },
+            { id: 7, barcode: "789012345", name: "Pie", price: 4.99, cost: 2.50, category: "Desserts", stock: 15 },
+            { id: 8, barcode: "890123456", name: "Water", price: 1.49, cost: 0.50, category: "Beverages", stock: 70 },
+        ];
+
+        let customers = [
+            { id: 1, name: "John Doe", email: "john@example.com", phone: "555-0101", orderCount: 0 },
+            { id: 2, name: "Jane Smith", email: "jane@example.com", phone: "555-0102", orderCount: 0 },
+        ];
+
+        let cart = [];
+        let orders = [];
+        let settings = {
+            theme: 'default',
+            receiptHeader: 'ShopPro POS\n123 Main St\nPhone: 555-1234',
+            taxRate: 8 // Default tax rate in percentage
+        };
+
+        let currentPage = 1;
+        const itemsPerPage = 5;
+        const LOW_STOCK_THRESHOLD = 5;
+        const OVERSTOCK_THRESHOLD = 100;
+
+        function initPOS() {
+            initCategories();
+            displayProducts();
+            showSection('sale');
+            displayOrders();
+            displayProductList();
+            displayCustomers();
+            initCustomerSelect();
+            initOrderFilter();
+            displayReports();
+            displaySettings();
+            applySettings();
+            setupBarcodeScanner();
+
+            const searchInput = document.getElementById('productSearch');
+            searchInput.addEventListener('input', debounce((e) => {
+                const activeCategory = document.querySelector('.category.active').textContent;
+                const categoryFilter = activeCategory === 'All' ? '' : activeCategory;
+                currentPage = 1;
+                displayProducts(categoryFilter, e.target.value, currentPage);
+            }, 300));
+        }
+
+        function debounce(func, wait) {
+            let timeout;
+            return function (...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        function setupBarcodeScanner() {
+            const barcodeInput = document.getElementById('barcodeInput');
+            barcodeInput.focus();
+
+            barcodeInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    scanBarcode();
+                }
+            });
+
+            document.addEventListener('click', () => {
+                setTimeout(() => {
+                    barcodeInput.focus();
+                }, 100);
+            });
+        }
+
+        function scanBarcode() {
+            const barcodeInput = document.getElementById('barcodeInput');
+            const barcode = barcodeInput.value.trim();
+
+            if (!barcode) {
+                alert('Please scan or enter a barcode.');
+                return;
+            }
+
+            const product = products.find(p => p.barcode === barcode);
+            if (!product) {
+                alert('Product not found with this barcode.');
+                barcodeInput.value = '';
+                barcodeInput.focus();
+                return;
+            }
+
+            if (product.stock <= 0) {
+                alert(`${product.name} is out of stock!`);
+                barcodeInput.value = '';
+                barcodeInput.focus();
+                return;
+            }
+
+            const existing = cart.find(item => item.id === product.id);
+            if (existing) {
+                existing.quantity++;
+            } else {
+                cart.push({ ...product, quantity: 1 });
+            }
+            product.stock--;
+            updateCart();
+            const activeCategory = document.querySelector('.category.active').textContent;
+            const categoryFilter = activeCategory === 'All' ? '' : activeCategory;
+            const searchTerm = document.getElementById('productSearch').value;
+            displayProducts(categoryFilter, searchTerm, currentPage);
+            displayProductList();
+            displayReports();
+
+            barcodeInput.value = '';
+            barcodeInput.focus();
+        }
+
+        function initCategories() {
+            const categories = ['All', ...new Set(products.map(p => p.category))];
+            const filterDiv = document.getElementById('categoryFilter');
+            filterDiv.innerHTML = '';
+            categories.forEach(cat => {
+                const div = document.createElement('div');
+                div.className = `category ${cat === 'All' ? 'active' : ''}`;
+                div.textContent = cat;
+                div.onclick = () => {
+                    document.querySelector('.category.active').classList.remove('active');
+                    div.classList.add('active');
+                    const searchTerm = document.getElementById('productSearch').value;
+                    currentPage = 1;
+                    displayProducts(cat === 'All' ? '' : cat, searchTerm, currentPage);
+                };
+                filterDiv.appendChild(div);
+            });
+        }
+
+        function displayProducts(category = '', searchTerm = '', page = currentPage) {
+            const productGrid = document.getElementById('productGrid');
+            productGrid.innerHTML = '';
+            const filteredProducts = products
+                .filter(p => (!category || p.category === category) && p.stock > 0)
+                .filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+            const totalItems = filteredProducts.length;
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+            currentPage = Math.max(1, Math.min(page, totalPages));
+
+            const start = (currentPage - 1) * itemsPerPage;
+            const end = start + itemsPerPage;
+            const paginatedProducts = filteredProducts.slice(start, end);
+
+            paginatedProducts.forEach(product => {
+                const div = document.createElement('div');
+                div.className = `product ${product.stock <= LOW_STOCK_THRESHOLD ? 'low-stock' : ''} ${product.stock > OVERSTOCK_THRESHOLD ? 'overstock' : ''}`;
+                div.innerHTML = `
+                    <div class="product-name">${product.name}</div>
+                    <div class="product-price">$${product.price.toFixed(2)}</div>
+                    ${product.stock <= LOW_STOCK_THRESHOLD ? '<div class="low-stock-warning">Low Stock: ' + product.stock + '</div>' : ''}
+                    ${product.stock > OVERSTOCK_THRESHOLD ? '<div class="overstock-warning">Overstock: ' + product.stock + '</div>' : ''}
+                    <div class="quantity-selector">
+                        <input type="number" class="quantity-input" min="1" max="${product.stock}" value="1">
+                        <div class="add-multiple-btn" onclick="addMultipleToCart(${product.id}, this.previousElementSibling.value)">Add</div>
+                    </div>
+                `;
+                div.onclick = (e) => {
+                    if (!e.target.classList.contains('add-multiple-btn') && 
+                        !e.target.classList.contains('quantity-input')) {
+                        addToCart(product);
+                    }
+                };
+                productGrid.appendChild(div);
+            });
+
+            renderPagination(totalPages, currentPage, category, searchTerm);
+        }
+
+        function renderPagination(totalPages, currentPage, category, searchTerm) {
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+
+            const prevButton = document.createElement('button');
+            prevButton.textContent = 'Previous';
+            prevButton.disabled = currentPage === 1;
+            prevButton.onclick = () => {
+                currentPage--;
+                displayProducts(category, searchTerm, currentPage);
+            };
+            pagination.appendChild(prevButton);
+
+            for (let i = 1; i <= totalPages; i++) {
+                const pageButton = document.createElement('button');
+                pageButton.textContent = i;
+                pageButton.disabled = i === currentPage;
+                pageButton.onclick = () => {
+                    currentPage = i;
+                    displayProducts(category, searchTerm, currentPage);
+                };
+                pagination.appendChild(pageButton);
+            }
+
+            const nextButton = document.createElement('button');
+            nextButton.textContent = 'Next';
+            nextButton.disabled = currentPage === totalPages;
+            nextButton.onclick = () => {
+                currentPage++;
+                displayProducts(category, searchTerm, currentPage);
+            };
+            pagination.appendChild(nextButton);
+        }
+
+        function addToCart(product) {
+            if (product.stock <= 0) {
+                alert('This product is out of stock!');
+                return;
+            }
+            const existing = cart.find(item => item.id === product.id);
+            if (existing) {
+                existing.quantity++;
+            } else {
+                cart.push({ ...product, quantity: 1 });
+            }
+            product.stock--;
+            updateCart();
+            const activeCategory = document.querySelector('.category.active').textContent;
+            const categoryFilter = activeCategory === 'All' ? '' : activeCategory;
+            const searchTerm = document.getElementById('productSearch').value;
+            displayProducts(categoryFilter, searchTerm, currentPage);
+            displayProductList();
+            displayReports();
+        }
+
+        function addMultipleToCart(productId, quantity) {
+            const product = products.find(p => p.id === productId);
+            quantity = parseInt(quantity);
+            if (product.stock < quantity || quantity <= 0) {
+                alert('Invalid quantity or insufficient stock');
+                return;
+            }
+            
+            const existing = cart.find(item => item.id === product.id);
+            if (existing) {
+                existing.quantity += quantity;
+            } else {
+                cart.push({ ...product, quantity: quantity });
+            }
+            product.stock -= quantity;
+            updateCart();
+            const activeCategory = document.querySelector('.category.active').textContent;
+            const categoryFilter = activeCategory === 'All' ? '' : activeCategory;
+            const searchTerm = document.getElementById('productSearch').value;
+            displayProducts(categoryFilter, searchTerm, currentPage);
+            displayProductList();
+            displayReports();
+        }
+
+        function updateCart() {
+            const cartItems = document.getElementById('cartItems');
+            cartItems.innerHTML = '';
+            cart.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'cart-item';
+                div.innerHTML = `
+                    <div class="item-details">
+                        <div class="item-title">${item.name}</div>
+                        <div class="item-price">$${item.price.toFixed(2)}</div>
+                    </div>
+                    <div class="item-quantity">
+                        <div class="quantity-btn" onclick="updateQuantity(${index}, -1)">-</div>
+                        <div>${item.quantity}</div>
+                        <div class="quantity-btn" onclick="updateQuantity(${index}, 1)">+</div>
+                    </div>
+                `;
+                cartItems.appendChild(div);
+            });
+            updateTotal();
+        }
+
+        function updateQuantity(index, change) {
+            const product = products.find(p => p.id === cart[index].id);
+            if (change > 0 && product.stock <= 0) return;
+            cart[index].quantity += change;
+            product.stock -= change;
+            if (cart[index].quantity <= 0) {
+                cart.splice(index, 1);
+            }
+            updateCart();
+            const activeCategory = document.querySelector('.category.active').textContent;
+            const categoryFilter = activeCategory === 'All' ? '' : activeCategory;
+            const searchTerm = document.getElementById('productSearch').value;
+            displayProducts(categoryFilter, searchTerm, currentPage);
+            displayProductList();
+            displayReports();
+        }
+
+        function applyDiscount() {
+            updateTotal();
+        }
+
+        function updateTotal() {
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const discountInput = document.getElementById('discountInput').value;
+            let discount = 0;
+            if (discountInput) {
+                const isPercentage = discountInput.endsWith('%');
+                const discountValue = parseFloat(discountInput.replace('%', ''));
+                if (!isNaN(discountValue)) {
+                    discount = isPercentage ? (subtotal * discountValue) / 100 : discountValue;
+                    discount = Math.min(discount, subtotal); // Ensure discount doesn't exceed subtotal
+                }
+            }
+            const tax = (subtotal - discount) * (settings.taxRate / 100);
+            const total = subtotal - discount + tax;
+
+            document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
+            document.getElementById('taxDisplay').textContent = `Tax (${settings.taxRate}%): $${tax.toFixed(2)}`;
+            document.getElementById('total').textContent = `$${total.toFixed(2)}`;
+        }
+
+        function processPayment() {
+            if (cart.length === 0) return;
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const discountInput = document.getElementById('discountInput').value;
+            let discount = 0;
+            if (discountInput) {
+                const isPercentage = discountInput.endsWith('%');
+                const discountValue = parseFloat(discountInput.replace('%', ''));
+                if (!isNaN(discountValue)) {
+                    discount = isPercentage ? (subtotal * discountValue) / 100 : discountValue;
+                    discount = Math.min(discount, subtotal);
+                }
+            }
+            const tax = (subtotal - discount) * (settings.taxRate / 100);
+            const total = subtotal - discount + tax;
+            const customerId = document.getElementById('customerSelect').value;
+            const order = {
+                id: orders.length + 1,
+                items: [...cart],
+                subtotal: subtotal,
+                discount: discount,
+                tax: tax,
+                total: total,
+                date: new Date().toLocaleString(),
+                status: 'Completed',
+                customerId: customerId ? parseInt(customerId) : null
+            };
+            orders.push(order);
+
+            if (customerId) {
+                const customer = customers.find(c => c.id === parseInt(customerId));
+                if (customer) customer.orderCount++;
+            }
+
+            alert(`Payment processed: $${total.toFixed(2)}${customerId ? ` for ${customers.find(c => c.id === parseInt(customerId)).name}` : ''}`);
+            clearCart();
+            displayOrders();
+            displayCustomers();
+            displayReports();
+            initCustomerSelect();
+        }
+
+        function printReceipt() {
+            if (cart.length === 0) return;
+            const customerId = document.getElementById('customerSelect').value;
+            const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const discountInput = document.getElementById('discountInput').value;
+            let discount = 0;
+            if (discountInput) {
+                const isPercentage = discountInput.endsWith('%');
+                const discountValue = parseFloat(discountInput.replace('%', ''));
+                if (!isNaN(discountValue)) {
+                    discount = isPercentage ? (subtotal * discountValue) / 100 : discountValue;
+                    discount = Math.min(discount, subtotal);
+                }
+            }
+            const tax = (subtotal - discount) * (settings.taxRate / 100);
+            const total = subtotal - discount + tax;
+
+            let receipt = `${settings.receiptHeader}\n\nReceipt\nDate: ${new Date().toLocaleString()}\n`;
+            if (customerId) {
+                const customer = customers.find(c => c.id === parseInt(customerId));
+                receipt += `Customer: ${customer.name}\n`;
+            }
+            receipt += `\nItems:\n`;
+            cart.forEach(item => {
+                receipt += `${item.name} x${item.quantity} - $${(item.price * item.quantity).toFixed(2)}\n`;
+            });
+            receipt += `\nSubtotal: $${subtotal.toFixed(2)}\n`;
+            if (discount > 0) receipt += `Discount: -$${discount.toFixed(2)}\n`;
+            receipt += `Tax (${settings.taxRate}%): $${tax.toFixed(2)}\n`;
+            receipt += `Total: $${total.toFixed(2)}`;
+            const win = window.open('', '', 'width=400,height=600');
+            win.document.write('<pre>' + receipt + '</pre>');
+            win.print();
+        }
+
+        function clearCart() {
+            cart = [];
+            document.getElementById('discountInput').value = '';
+            updateCart();
+            const activeCategory = document.querySelector('.category.active').textContent;
+            const categoryFilter = activeCategory === 'All' ? '' : activeCategory;
+            const searchTerm = document.getElementById('productSearch').value;
+            displayProducts(categoryFilter, searchTerm, currentPage);
+            displayProductList();
+            displayReports();
+            document.getElementById('customerSelect').value = '';
+        }
+
+        function showSection(section) {
+            document.querySelector('.menu-item.active').classList.remove('active');
+            document.querySelectorAll('.sales-section, .orders-section, .products-section, .customers-section, .reports-section, .settings-section')
+                .forEach(el => el.style.display = 'none');
+            
+            if (section === 'sale') {
+                document.getElementById('saleSection').style.display = 'flex';
+                document.querySelector('.menu-item:nth-child(1)').classList.add('active');
+                document.getElementById('barcodeInput').focus();
+            } else if (section === 'orders') {
+                document.getElementById('ordersSection').style.display = 'flex';
+                document.querySelector('.menu-item:nth-child(2)').classList.add('active');
+            } else if (section === 'products') {
+                document.getElementById('productsSection').style.display = 'flex';
+                document.querySelector('.menu-item:nth-child(3)').classList.add('active');
+            } else if (section === 'customers') {
+                document.getElementById('customersSection').style.display = 'flex';
+                document.querySelector('.menu-item:nth-child(4)').classList.add('active');
+            } else if (section === 'reports') {
+                document.getElementById('reportsSection').style.display = 'flex';
+                document.querySelector('.menu-item:nth-child(5)').classList.add('active');
+            } else if (section === 'settings') {
+                document.getElementById('settingsSection').style.display = 'flex';
+                document.querySelector('.menu-item:nth-child(6)').classList.add('active');
+            }
+        }
+
+        function displayOrders() {
+            const ordersList = document.getElementById('ordersList');
+            ordersList.innerHTML = '';
+            orders.forEach(order => {
+                const div = document.createElement('div');
+                div.className = 'order-item';
+                const customer = order.customerId ? customers.find(c => c.id === order.customerId) : null;
+                div.innerHTML = `
+                    <div>
+                        <div>Order #${order.id}${customer ? ` - ${customer.name}` : ''}</div>
+                        <div class="order-details">${order.date} - ${order.status}</div>
+                    </div>
+                    <div>$${order.total.toFixed(2)}</div>
+                `;
+                div.onclick = () => showOrderDetails(order);
+                ordersList.appendChild(div);
+            });
+        }
+
+        function filterOrders() {
+            const searchTerm = document.getElementById('orderSearch').value.toLowerCase();
+            const customerId = document.getElementById('customerFilter').value;
+            const filteredOrders = orders.filter(order => {
+                const customer = order.customerId ? customers.find(c => c.id === order.customerId) : null;
+                const matchesId = order.id.toString().includes(searchTerm);
+                const matchesDate = order.date.toLowerCase().includes(searchTerm);
+                const matchesCustomer = customer ? customer.name.toLowerCase().includes(searchTerm) : false;
+                const matchesCustomerFilter = !customerId || (order.customerId && order.customerId.toString() === customerId);
+                return (matchesId || matchesDate || matchesCustomer) && matchesCustomerFilter;
+            });
+            displayFilteredOrders(filteredOrders);
+        }
+
+        function displayFilteredOrders(filteredOrders) {
+            const ordersList = document.getElementById('ordersList');
+            ordersList.innerHTML = '';
+            filteredOrders.forEach(order => {
+                const div = document.createElement('div');
+                div.className = 'order-item';
+                const customer = order.customerId ? customers.find(c => c.id === order.customerId) : null;
+                div.innerHTML = `
+                    <div>
+                        <div>Order #${order.id}${customer ? ` - ${customer.name}` : ''}</div>
+                        <div class="order-details">${order.date} - ${order.status}</div>
+                    </div>
+                    <div>$${order.total.toFixed(2)}</div>
+                `;
+                div.onclick = () => showOrderDetails(order);
+                ordersList.appendChild(div);
+            });
+        }
+
+        function initOrderFilter() {
+            const select = document.getElementById('customerFilter');
+            select.innerHTML = '<option value="">All Customers</option>';
+            customers.forEach(customer => {
+                const option = document.createElement('option');
+                option.value = customer.id;
+                option.textContent = customer.name;
+                select.appendChild(option);
+            });
+        }
+
+        function showOrderDetails(order) {
+            let details = `Order #${order.id}\nDate: ${order.date}\nStatus: ${order.status}\n`;
+            if (order.customerId) {
+                const customer = customers.find(c => c.id === order.customerId);
+                details += `Customer: ${customer.name}\n`;
+            }
+            details += `\nItems:\n`;
+            order.items.forEach(item => {
+                details += `${item.name} x${item.quantity} - $${(item.price * item.quantity).toFixed(2)}\n`;
+            });
+            details += `\nSubtotal: $${order.subtotal.toFixed(2)}\n`;
+            if (order.discount > 0) details += `Discount: -$${order.discount.toFixed(2)}\n`;
+            details += `Tax (${settings.taxRate}%): $${order.tax.toFixed(2)}\n`;
+            details += `Total: $${order.total.toFixed(2)}`;
+            alert(details);
+        }
+
+        function displayProductList() {
+            const productsList = document.getElementById('productsList');
+            productsList.innerHTML = '';
+            products.forEach(product => {
+                const div = document.createElement('div');
+                div.className = `product-item ${product.stock <= LOW_STOCK_THRESHOLD ? 'low-stock' : ''} ${product.stock > OVERSTOCK_THRESHOLD ? 'overstock' : ''}`;
+                div.innerHTML = `
+                    <div>${product.id}</div>
+                    <div class="product-details">
+                        <div>${product.name}</div>
+                        ${product.stock <= LOW_STOCK_THRESHOLD ? '<div class="low-stock-warning">Low Stock!</div>' : ''}
+                        ${product.stock > OVERSTOCK_THRESHOLD ? '<div class="overstock-warning">Overstock!</div>' : ''}
+                    </div>
+                    <div>${product.category}</div>
+                    <div>$${product.price.toFixed(2)}</div>
+                    <div>${product.stock}</div>
+                    <button class="delete-btn" onclick="deleteProduct(${product.id})">Delete</button>
+                `;
+                productsList.appendChild(div);
+            });
+        }
+
+        function deleteProduct(productId) {
+            if (confirm('Are you sure you want to delete this product?')) {
+                const productIndex = products.findIndex(p => p.id === productId);
+                if (productIndex !== -1) {
+                    products.splice(productIndex, 1);
+                    const cartIndex = cart.findIndex(item => item.id === productId);
+                    if (cartIndex !== -1) cart.splice(cartIndex, 1);
+                    initCategories();
+                    const activeCategory = document.querySelector('.category.active').textContent;
+                    const categoryFilter = activeCategory === 'All' ? '' : activeCategory;
+                    const searchTerm = document.getElementById('productSearch').value;
+                    displayProducts(categoryFilter, searchTerm, currentPage);
+                    displayProductList();
+                    updateCart();
+                    displayReports();
+                }
+            }
+        }
+
+        function addNewProduct() {
+            const name = document.getElementById('newProductName').value;
+            const price = parseFloat(document.getElementById('newProductPrice').value);
+            const cost = parseFloat(document.getElementById('newProductCost').value);
+            const stock = parseInt(document.getElementById('newProductStock').value);
+            const category = document.getElementById('newProductCategory').value;
+
+            if (!name || isNaN(price) || isNaN(cost) || isNaN(stock) || !category) {
+                alert('Please fill all fields correctly');
+                return;
+            }
+
+            const newProduct = {
+                id: products.length + 1,
+                barcode: `barcode${products.length + 1}`,
+                name,
+                price,
+                cost,
+                category,
+                stock
+            };
+
+            products.push(newProduct);
+            initCategories();
+            const activeCategory = document.querySelector('.category.active').textContent;
+            const categoryFilter = activeCategory === 'All' ? '' : activeCategory;
+            const searchTerm = document.getElementById('productSearch').value;
+            displayProducts(categoryFilter, searchTerm, currentPage);
+            displayProductList();
+            displayReports();
+            document.getElementById('newProductName').value = '';
+            document.getElementById('newProductPrice').value = '';
+            document.getElementById('newProductCost').value = '';
+            document.getElementById('newProductStock').value = '';
+            document.getElementById('newProductCategory').value = '';
+        }
+
+        function displayCustomers() {
+            const customersList = document.getElementById('customersList');
+            customersList.innerHTML = '';
+            customers.forEach(customer => {
+                const div = document.createElement('div');
+                div.className = 'customer-item';
+                div.innerHTML = `
+                    <div>
+                        <div>${customer.name}</div>
+                        <div class="order-details">${customer.email}</div>
+                    </div>
+                    <div>Orders: ${customer.orderCount}</div>
+                `;
+                div.onclick = () => showCustomerDetails(customer);
+                customersList.appendChild(div);
+            });
+            initCustomerSelect();
+            initOrderFilter();
+        }
+
+        function addNewCustomer() {
+            const name = document.getElementById('newCustomerName').value;
+            const email = document.getElementById('newCustomerEmail').value;
+            const phone = document.getElementById('newCustomerPhone').value;
+
+            if (!name || !email || !phone) {
+                alert('Please fill all fields correctly');
+                return;
+            }
+
+            const newCustomer = {
+                id: customers.length + 1,
+                name,
+                email,
+                phone,
+                orderCount: 0
+            };
+
+            customers.push(newCustomer);
+            displayCustomers();
+            displayReports();
+            document.getElementById('newCustomerName').value = '';
+            document.getElementById('newCustomerEmail').value = '';
+            document.getElementById('newCustomerPhone').value = '';
+        }
+
+        function showCustomerDetails(customer) {
+            const details = `Customer ID: ${customer.id}
+Name: ${customer.name}
+Email: ${customer.email}
+Phone: ${customer.phone}
+Total Orders: ${customer.orderCount}`;
+            alert(details);
+        }
+
+        function initCustomerSelect() {
+            const select = document.getElementById('customerSelect');
+            select.innerHTML = '<option value="">Select Customer (Optional)</option>';
+            customers.forEach(customer => {
+                const option = document.createElement('option');
+                option.value = customer.id;
+                option.textContent = customer.name;
+                select.appendChild(option);
+            });
+        }
+
+        function displayReports() {
+            const reportsContainer = document.getElementById('reportsContainer');
+            reportsContainer.innerHTML = '';
+
+            // Sales Summary
+            const totalSales = orders.reduce((sum, order) => sum + order.total, 0);
+            const totalItemsSold = orders.reduce((sum, order) => 
+                sum + order.items.reduce((itemSum, item) => itemSum + item.quantity, 0), 0);
+            const salesSummary = document.createElement('div');
+            salesSummary.className = 'report-section';
+            salesSummary.innerHTML = `
+                <h3>Sales Summary</h3>
+                <p>Total Sales: $${totalSales.toFixed(2)}</p>
+                <p>Total Orders: ${orders.length}</p>
+                <p>Total Items Sold: ${totalItemsSold}</p>
+            `;
+            reportsContainer.appendChild(salesSummary);
+
+            // Inventory Alerts
+            const lowStockItems = products.filter(p => p.stock <= LOW_STOCK_THRESHOLD);
+            const overstockItems = products.filter(p => p.stock > OVERSTOCK_THRESHOLD);
+            const inventoryAlerts = document.createElement('div');
+            inventoryAlerts.className = 'report-section';
+            inventoryAlerts.innerHTML = `
+                <h3>Inventory Alerts</h3>
+                ${lowStockItems.length > 0 ? '<p>Low Stock Items:</p>' + lowStockItems.map(item => `<p>${item.name}: ${item.stock} units</p>`).join('') : '<p>No low stock items.</p>'}
+                ${overstockItems.length > 0 ? '<p>Overstocked Items:</p>' + overstockItems.map(item => `<p>${item.name}: ${item.stock} units</p>`).join('') : '<p>No overstocked items.</p>'}
+            `;
+            reportsContainer.appendChild(inventoryAlerts);
+
+            // Stock Replenishment Suggestions
+            const days = 7; // Consider last 7 days for average sales
+            const currentDate = new Date();
+            const recentOrders = orders.filter(o => {
+                const orderDate = new Date(o.date);
+                return (currentDate - orderDate) / (1000 * 60 * 60 * 24) <= days;
+            });
+            const productSales = {};
+            recentOrders.forEach(order => {
+                order.items.forEach(item => {
+                    productSales[item.id] = (productSales[item.id] || 0) + item.quantity;
+                });
+            });
+            const avgDailySales = {};
+            for (const [id, qty] of Object.entries(productSales)) {
+                avgDailySales[id] = qty / days;
+            }
+            const replenishmentSuggestions = lowStockItems.map(item => {
+                const avgSales = avgDailySales[item.id] || 0;
+                const suggestedQty = Math.max(20, Math.ceil(avgSales * 7)); // Suggest at least 20 or 7 days of sales
+                return { ...item, suggestedQty };
+            }).filter(item => item.suggestedQty > item.stock);
+            const replenishmentSection = document.createElement('div');
+            replenishmentSection.className = 'report-section';
+            replenishmentSection.innerHTML = `
+                <h3>Stock Replenishment Suggestions</h3>
+                ${replenishmentSuggestions.length > 0 ? replenishmentSuggestions.map(item => `<p>${item.name}: Suggest restock ${item.suggestedQty - item.stock} units (Current: ${item.stock}, Avg Daily Sales: ${avgDailySales[item.id]?.toFixed(2) || 0})</p>`).join('') : '<p>No replenishment needed.</p>'}
+            `;
+            reportsContainer.appendChild(replenishmentSection);
+
+            // Top Products
+            const topProducts = Object.entries(productSales)
+                .map(([id, qty]) => ({ ...products.find(p => p.id === parseInt(id)), qty }))
+                .sort((a, b) => b.qty - a.qty)
+                .slice(0, 5);
+            const topProductsSection = document.createElement('div');
+            topProductsSection.className = 'report-section';
+            topProductsSection.innerHTML = `
+                <h3>Top 5 Products</h3>
+                ${topProducts.map(p => `<p>${p.name}: ${p.qty} sold ($${p.price * p.qty.toFixed(2)})</p>`).join('')}
+            `;
+            reportsContainer.appendChild(topProductsSection);
+
+            // Top Customers
+            const activeCustomers = customers
+                .filter(c => c.orderCount > 0)
+                .sort((a, b) => b.orderCount - a.orderCount)
+                .slice(0, 5);
+            const customerActivity = document.createElement('div');
+            customerActivity.className = 'report-section';
+            customerActivity.innerHTML = `
+                <h3>Top 5 Active Customers</h3>
+                ${activeCustomers.map(c => `<p>${c.name}: ${c.orderCount} orders</p>`).join('')}
+            `;
+            reportsContainer.appendChild(customerActivity);
+
+            // Sales Analytics: Daily Sales Chart
+            const dailySales = {};
+            orders.forEach(order => {
+                const date = new Date(order.date).toLocaleDateString();
+                dailySales[date] = (dailySales[date] || 0) + order.total;
+            });
+            const dailySalesChartSection = document.createElement('div');
+            dailySalesChartSection.className = 'report-section';
+            dailySalesChartSection.innerHTML = `
+                <h3>Daily Sales</h3>
+                <div class="chart-container">
+                    <canvas id="dailySalesChart"></canvas>
+                </div>
+            `;
+            reportsContainer.appendChild(dailySalesChartSection);
+            new Chart(document.getElementById('dailySalesChart'), {
+                type: 'line',
+                data: {
+                    labels: Object.keys(dailySales),
+                    datasets: [{
+                        label: 'Sales ($)',
+                        data: Object.values(dailySales),
+                        borderColor: 'rgba(74, 111, 165, 1)',
+                        backgroundColor: 'rgba(74, 111, 165, 0.2)',
+                        fill: true,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            // Sales by Category
+            const categorySales = {};
+            orders.forEach(order => {
+                order.items.forEach(item => {
+                    const product = products.find(p => p.id === item.id);
+                    if (product) {
+                        categorySales[product.category] = (categorySales[product.category] || 0) + (item.price * item.quantity);
+                    }
+                });
+            });
+            const categorySalesChartSection = document.createElement('div');
+            categorySalesChartSection.className = 'report-section';
+            categorySalesChartSection.innerHTML = `
+                <h3>Sales by Category</h3>
+                <div class="chart-container">
+                    <canvas id="categorySalesChart"></canvas>
+                </div>
+            `;
+            reportsContainer.appendChild(categorySalesChartSection);
+            new Chart(document.getElementById('categorySalesChart'), {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(categorySales),
+                    datasets: [{
+                        label: 'Sales ($)',
+                        data: Object.values(categorySales),
+                        backgroundColor: [
+                            'rgba(74, 111, 165, 0.8)',
+                            'rgba(255, 99, 132, 0.8)',
+                            'rgba(54, 162, 235, 0.8)',
+                            'rgba(255, 206, 86, 0.8)',
+                            'rgba(75, 192, 192, 0.8)',
+                        ],
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                }
+            });
+
+            // Profit Margin Analysis
+            const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
+            const totalCost = orders.reduce((sum, order) => 
+                sum + order.items.reduce((itemSum, item) => {
+                    const product = products.find(p => p.id === item.id);
+                    return itemSum + (product.cost * item.quantity);
+                }, 0), 0);
+            const totalProfit = totalRevenue - totalCost;
+            const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+            const profitAnalysis = document.createElement('div');
+            profitAnalysis.className = 'report-section';
+            profitAnalysis.innerHTML = `
+                <h3>Profit Margin Analysis</h3>
+                <p>Total Revenue: $${totalRevenue.toFixed(2)}</p>
+                <p>Total Cost: $${totalCost.toFixed(2)}</p>
+                <p>Total Profit: $${totalProfit.toFixed(2)}</p>
+                <p>Profit Margin: ${profitMargin.toFixed(2)}%</p>
+            `;
+            reportsContainer.appendChild(profitAnalysis);
+        }
+
+        function displaySettings() {
+            const settingsContainer = document.getElementById('settingsContainer');
+            settingsContainer.innerHTML = '';
+
+            const appearanceSection = document.createElement('div');
+            appearanceSection.className = 'settings-section-inner';
+            appearanceSection.innerHTML = `
+                <h3>Appearance</h3>
+                <div class="settings-option">
+                    <label for="themeSelect">Theme:</label>
+                    <select id="themeSelect" onchange="updateSettings()">
+                        <option value="default" ${settings.theme === 'default' ? 'selected' : ''}>Default</option>
+                        <option value="dark" ${settings.theme === 'dark' ? 'selected' : ''}>Dark</option>
+                        <option value="light" ${settings.theme === 'light' ? 'selected' : ''}>Light</option>
+                    </select>
+                </div>
+            `;
+            settingsContainer.appendChild(appearanceSection);
+
+            const receiptSection = document.createElement('div');
+            receiptSection.className = 'settings-section-inner';
+            receiptSection.innerHTML = `
+                <h3>Receipt Settings</h3>
+                <div class="settings-option">
+                    <label for="receiptHeader">Receipt Header:</label>
+                    <textarea id="receiptHeader" rows="4" style="width: 100%;">${settings.receiptHeader}</textarea>
+                </div>
+            `;
+            settingsContainer.appendChild(receiptSection);
+
+            const taxSection = document.createElement('div');
+            taxSection.className = 'settings-section-inner';
+            taxSection.innerHTML = `
+                <h3>Tax Settings</h3>
+                <div class="settings-option">
+                    <label for="taxRate">Tax Rate (%):</label>
+                    <input type="number" id="taxRate" value="${settings.taxRate}" step="0.1" min="0" max="100" onchange="updateSettings()">
+                </div>
+                <button class="btn btn-primary" onclick="updateSettings()">Save Settings</button>
+            `;
+            settingsContainer.appendChild(taxSection);
+        }
+
+        function updateSettings() {
+            settings.theme = document.getElementById('themeSelect').value;
+            settings.receiptHeader = document.getElementById('receiptHeader').value;
+            settings.taxRate = parseFloat(document.getElementById('taxRate').value) || 8;
+            applySettings();
+            updateTotal();
+            alert('Settings saved!');
+        }
+
+        function applySettings() {
+            const root = document.documentElement;
+            if (settings.theme === 'dark') {
+                root.style.setProperty('--primary', '#2a4365');
+                root.style.setProperty('--secondary', '#1a2634');
+                root.style.setProperty('--light', '#2d3748');
+                root.style.setProperty('--dark', '#e2e8f0');
+                root.style.setProperty('--gray', '#a0aec0');
+                document.body.style.background = '#1a202c';
+            } else if (settings.theme === 'light') {
+                root.style.setProperty('--primary', '#63b3ed');
+                root.style.setProperty('--secondary', '#4299e1');
+                root.style.setProperty('--light', '#ebf8ff');
+                root.style.setProperty('--dark', '#2b6cb0');
+                root.style.setProperty('--gray', '#90cdf4');
+                document.body.style.background = '#edf2f7';
+            } else {
+                root.style.setProperty('--primary', '#4a6fa5');
+                root.style.setProperty('--secondary', '#334e68');
+                root.style.setProperty('--light', '#f9f9fb');
+                root.style.setProperty('--dark', '#243b53');
+                root.style.setProperty('--gray', '#829ab1');
+                document.body.style.background = '#f5f7fa';
+            }
+        }
+
+        window.onload = initPOS;
+    </script>
+</body>
+</html>
